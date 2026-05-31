@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RanSafeTelemetryPayload",
+  "type": "object",
+  "properties": {
+    "node_id": { "type": "string" },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "cpu_utilization_percentage": { "type": "number" },
+        "filesystem_write_ops_per_sec": { "type": "integer" },
+        "entropy_coefficient": { "type": "number" }
+      },
+      "required": ["cpu_utilization_percentage", "filesystem_write_ops_per_sec", "entropy_coefficient"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "required": ["node_id", "metrics", "timestamp"]
+}
+

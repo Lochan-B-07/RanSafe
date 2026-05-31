@@ -33,21 +33,17 @@ To ensure high-velocity, concurrent development without anyone getting blocked, 
 
 * **Lane 1: Backend & Threat Simulation (`/sandbox`)**
   * **Core Focus:** Building the victim microservice environment and writing the localized, safe file-encryption attack script (`sandbox/malware_sim.sh`).
-  * **Lead Assignment:** Sujay and Aditya.
 * **Lane 2: Cloud Ops & System Management (`/observability`)**
   * **Core Focus:** Deploying the local cluster configuration, linking it to the Dynatrace environment, and standing up the Model Context Protocol (MCP) telemetry server.
-  * **Lead Assignment:** Lochan and Krishna.
 * **Lane 3: AI Core & Orchestration (`/agent`)**
   * **Core Focus:** Wiring up Google Cloud Agent Builder, initializing Gemini 3, and authoring the precision threshold evaluation system prompts.
-  * **Lead Assignment:** Sujay and Aditya.
 * **Lane 4: Infrastructure Execution & UX (`/execution`)**
   * **Core Focus:** Coding the state-mutating shell/Kubernetes handlers that execute the `AIRGAP_NODE` command, and designing the sleek terminal interface for the 3-minute demo video.
-  * **Lead Assignment:** Lochan and Krishna.
 
 ### The First Engineering Sprint
 To kickstart the codebase concurrently:
-* **The Threat Leads (Sujay/Aditya):** Jump into `/sandbox` and use an LLM to generate a lightweight Node.js or Python application that writes dummy logs to a tracking folder.
-* **The Infrastructure Leads (Lochan/Krishna):** Jump into `/execution/scripts` and map out a simple bash command capable of simulating a network disconnect on a local interface.
+* **The Threat Leads :** Jump into `/sandbox` and use an LLM to generate a lightweight Node.js or Python application that writes dummy logs to a tracking folder.
+* **The Infrastructure Leads :** Jump into `/execution/scripts` and map out a simple bash command capable of simulating a network disconnect on a local interface.
 
 ---
 

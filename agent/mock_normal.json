@@ -1,0 +1,92 @@
+[
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 41.5,
+      "filesystem_write_ops_per_sec": 10,
+      "entropy_coefficient": 0.221
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 6.38,
+      "filesystem_write_ops_per_sec": 19,
+      "entropy_coefficient": 0.357
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 37.61,
+      "filesystem_write_ops_per_sec": 21,
+      "entropy_coefficient": 0.292
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 36.93,
+      "filesystem_write_ops_per_sec": 23,
+      "entropy_coefficient": 0.108
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 39.55,
+      "filesystem_write_ops_per_sec": 5,
+      "entropy_coefficient": 0.195
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 25.44,
+      "filesystem_write_ops_per_sec": 9,
+      "entropy_coefficient": 0.221
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 30.19,
+      "filesystem_write_ops_per_sec": 16,
+      "entropy_coefficient": 0.303
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 8.34,
+      "filesystem_write_ops_per_sec": 24,
+      "entropy_coefficient": 0.385
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 39.55,
+      "filesystem_write_ops_per_sec": 9,
+      "entropy_coefficient": 0.138
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  },
+  {
+    "node_id": "node-us-east-412",
+    "metrics": {
+      "cpu_utilization_percentage": 44.28,
+      "filesystem_write_ops_per_sec": 24,
+      "entropy_coefficient": 0.356
+    },
+    "timestamp": "2026-05-31T06:28:07.493977Z"
+  }
+]

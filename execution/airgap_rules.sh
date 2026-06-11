@@ -30,13 +30,21 @@ if [ "$GCP_ACTIVE" = true ]; then
     SECRET_VAL=$(gcloud secrets versions access latest --secret="ransafe-auth-key" 2>/dev/null || true)
     if [ -n "$SECRET_VAL" ]; then
         echo "[SECRET MANAGER] ✅ Identity token successfully retrieved from Secret Manager."
+        if [ "$AUTH_TOKEN" != "$SECRET_VAL" ]; then
+            echo "❌ [ERROR] Security Token Mismatch. Action rejected by Secret Manager policy."
+            exit 403
+        fi
+        echo "[SECRET MANAGER] ✅ Security token successfully authenticated."
     else
-        echo "[SECRET MANAGER] ⚠️ Secret 'ransafe-auth-key' not found in Secret Manager. Using environment-fallback identity."
+        echo "[SECRET MANAGER] ⚠️ Secret 'ransafe-auth-key' not found in Secret Manager. Bypassing check due to missing infrastructure setup."
     fi
 else
     # Dry-run fallback representation
     echo "[SECRET MANAGER] [DRY-RUN] Simulating retrieval of credential 'ransafe-auth-key'..."
     echo "[SECRET MANAGER] [DRY-RUN] ✅ Retrieved verification token: SEC_MGR_FB_2026_ABCD_99"
+    if [ -n "$AUTH_TOKEN" ] && [ "$AUTH_TOKEN" != "SEC_MGR_FB_2026_ABCD_99" ]; then
+         echo "[SECRET MANAGER] [DRY-RUN] ⚠️ Warning: Fallback token mismatch, proceeding in dry-run simulation."
+    fi
 fi
 
 case "$ACTION_TOKEN" in

@@ -10,6 +10,13 @@ import http.server
 import socketserver
 import re
 
+# Try to import Google Cloud Secret Manager for auth validation
+try:
+    from google.cloud import secretmanager
+    HAS_GCP_SECRET_MANAGER = True
+except ImportError:
+    HAS_GCP_SECRET_MANAGER = False
+
 # Try to import Rich library for advanced TUI
 try:
     import rich
@@ -419,6 +426,46 @@ def execute_restore(target_asset):
     else:
         log_err(f"Restore script exited with error code {proc.returncode}")
 
+def validate_gcp_secret(auth_token):
+    """
+    Validates the authorization token against Google Cloud Secret Manager.
+    If GCP is not active or secretmanager is not installed, it falls back to passing.
+    """
+    if not HAS_GCP_SECRET_MANAGER:
+        log_info("google-cloud-secret-manager not installed. Skipping direct Python validation.")
+        return True
+        
+    try:
+        # Check if running in GCP context
+        project_id = os.environ.get("GCP_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if not project_id:
+            # Try to get project via gcloud config
+            import subprocess
+            res = subprocess.run(
+                ["gcloud", "config", "get-value", "project"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            project_id = res.stdout.strip()
+            
+        if not project_id:
+            log_warn("GCP Project ID not detected. Skipping Secret Manager validation.")
+            return True
+
+        client = secretmanager.SecretManagerServiceClient()
+        name = f"projects/{project_id}/secrets/ransafe-auth-key/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        secret_val = response.payload.data.decode("UTF-8").strip()
+        
+        if auth_token != secret_val:
+            log_err("Security token verification failed against GCP Secret Manager!")
+            return False
+            
+        log_success("Security token successfully validated against GCP Secret Manager.")
+        return True
+    except Exception as e:
+        log_warn(f"Secret Manager validation bypassed due to: {e}")
+        return True
+
 class RanSafeWebServer(http.server.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
@@ -589,6 +636,11 @@ if __name__ == "__main__":
             update_tui()
             
             if action_token in ["AIRGAP_NODE", "REALLOCATE_RESOURCES", "MONITOR_INTENSE"]:
+                # Verify token against Secret Manager before proceeding
+                if not validate_gcp_secret(auth_token):
+                    log_err(f"Action {action_token} rejected due to unauthorized access token.")
+                    continue
+
                 if action_token == "AIRGAP_NODE":
                     confirm_event.clear()
                     cancel_event.clear()

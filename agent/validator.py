@@ -252,8 +252,11 @@ def main():
     failure_count = 0
 
     if args.input == "-":
-        # Read from stdin line-by-line for continuous pipe support
-        for line in sys.stdin:
+        # Read from stdin line-by-line for continuous pipe support using unbuffered readline
+        while True:
+            line = sys.stdin.readline()
+            if not line:
+                break
             line = line.strip()
             if not line:
                 continue

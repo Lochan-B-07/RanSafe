@@ -594,8 +594,12 @@ if __name__ == "__main__":
     start_live_display()
     update_tui()
 
-    for line in sys.stdin:
-        if not line.strip():
+    while True:
+        line = sys.stdin.readline()
+        if not line:
+            break
+        line = line.strip()
+        if not line:
             continue
         try:
             payload = json.loads(line.strip())

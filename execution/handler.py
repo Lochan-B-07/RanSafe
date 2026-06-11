@@ -59,7 +59,7 @@ BANNER = f"""{RED}{BOLD}
 # Global State Dictionary for the Orchestrator
 state = {
     "status": "NOMINAL", # NOMINAL, PENDING_CONFIRMATION, AIRGAP_ACTIVE, REALLOCATE_RESOURCES, MONITOR_INTENSE
-    "target_node_id": "k8s-pod-node-dummy-app-xyz",
+    "target_node_id": "node-us-east-412",
     "authorization_token": "",
     "reasoning_summary": "",
     "metrics": {
@@ -652,6 +652,7 @@ if __name__ == "__main__":
                     with state_lock:
                         state["status"] = "PENDING_CONFIRMATION"
                     update_tui()
+                    time.sleep(0.5)
                     
                     # Stop TUI to prompt on TTY
                     stop_live_display()
@@ -688,6 +689,7 @@ if __name__ == "__main__":
                             state["status"] = "AIRGAP_ACTIVE"
                         execute_airgap(target_asset, action_token, auth_token, ai_reasoning)
                         update_tui()
+                        time.sleep(0.5)
                         
                         # Stop TUI to check restore
                         stop_live_display()

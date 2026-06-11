@@ -664,7 +664,10 @@ if __name__ == "__main__":
                             with open('/dev/tty', 'r') as tty:
                                 choice = tty.readline().strip().lower()
                         except Exception:
-                            choice = input().strip().lower()
+                            try:
+                                choice = input().strip().lower()
+                            except (EOFError, Exception):
+                                choice = 'y'
                         
                         if choice in ['n', 'no']:
                             cancel_event.set()

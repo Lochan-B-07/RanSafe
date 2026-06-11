@@ -30,6 +30,7 @@ We have successfully stood up the core validation and reasoning engine. This inc
   `dynatrace://nodes/{nodeId}/metrics`
 * **Data Contract**: Your MCP server must output telemetry that strictly matches the schema in `docs/telemetry_schema.json`. 
 * **Error Handling**: `agent/mcp_client.js` enforces strict type checking (e.g., verifying `filesystem_write_ops_per_sec` is an integer, and `cpu_utilization` is a float). If your server emits mismatched schemas, the client will immediately throw an assertion exception to prevent bad data state propagation.
+* **Sandbox Ingestion Endpoint**: When running `agent/mcp_client.js` in mock/sandbox mode (`--mock` or when `--server-path` is omitted), the client queries the live container sandbox HTTP endpoint directly: `https://ransafe-sandbox-453397284615.us-central1.run.app` to fetch active streaming metrics from the sandbox.
 
 ### 3. For Lane 4 (Infrastructure Execution & UX — `/execution`)
 * **Your Goal**: Capture the containment action and isolate the network interface.

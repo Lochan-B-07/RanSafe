@@ -28,6 +28,12 @@ We added mock unit tests in **[test_agent.py](file:///home/suzaykid/Projects/Ran
 * `test_run_gemini_inference_markdown_cleanup`: Verifies that if Gemini returns JSON wrapped in markdown ` ```json ` tags, the code successfully cleans it up and parses the JSON.
 * `test_run_gemini_inference_failure`: Verifies error handling and graceful fallbacks when the live API call fails.
 
+### 4. Live Container Sandbox Data Ingestion Hook
+We updated the `agent/mcp_client.js` data ingestion hook:
+* **Target Ingestion Source**: Changed from the local mock telemetry payload generator to point directly to the live container sandbox HTTP endpoint: `https://ransafe-sandbox-453397284615.us-central1.run.app`.
+* **Behavior**: When running the orchestrator or `mcp_client.js` in mock mode (`--mock`), the client performs a live asynchronous HTTP fetch to retrieve streaming metrics from the sandbox, validates the telemetry payload against `docs/telemetry_schema.json`, and feeds it into the validator.
+* **Validation**: Verified that the live telemetry payload is correctly formatted and parsed by the rule engine and Gemini.
+
 ---
 
 ## 🧪 Verification Commands
@@ -40,5 +46,11 @@ python3 -m unittest agent/test_agent.py
 
 # Run Node.js Unit Tests (verifies telemetry schema mappings)
 node agent/test_mcp_client.js
+
+# Test live telemetry retrieval from the Cloud Run sandbox endpoint
+node agent/mcp_client.js --mock
+
+# Run end-to-end pipeline ingestion test from the sandbox through the validator
+node agent/mcp_client.js --mock --json-only | python3 agent/validator.py --prompt agent/system_prompt.txt --input -
 ```
 All tests should pass successfully.

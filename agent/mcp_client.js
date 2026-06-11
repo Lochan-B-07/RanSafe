@@ -147,22 +147,30 @@ if (require.main === module) {
   const jsonOnly = args.includes('--json-only');
 
   if (mockMode) {
+    const liveUrl = 'https://ransafe-sandbox-453397284615.us-central1.run.app';
     if (!jsonOnly) {
-      console.log(`[INFO] Running in MCP Mock Client mode for node: ${nodeIdArg} (${modeArg})`);
+      console.log(`[INFO] Running in MCP Client mode fetching from live HTTP endpoint: ${liveUrl}`);
     }
-    const payload = getMockDynatraceMcpMetrics(nodeIdArg, modeArg);
-    try {
-      validateTelemetry(payload);
-      if (!jsonOnly) {
-        console.log('✓ Mock Telemetry retrieved successfully:');
-        console.log(JSON.stringify(payload, null, 2));
-      } else {
-        console.log(JSON.stringify(payload));
-      }
-    } catch (err) {
-      console.error('✗ Telemetry validation failed:', err.message);
-      process.exit(1);
-    }
+    fetch(liveUrl)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(payload => {
+        validateTelemetry(payload);
+        if (!jsonOnly) {
+          console.log('✓ Live Telemetry retrieved successfully:');
+          console.log(JSON.stringify(payload, null, 2));
+        } else {
+          console.log(JSON.stringify(payload));
+        }
+      })
+      .catch(err => {
+        console.error('✗ Telemetry retrieval/validation failed:', err.message);
+        process.exit(1);
+      });
   } else {
     if (!jsonOnly) {
       console.log(`[INFO] Connecting to Dynatrace MCP Server: ${serverPathArg}`);

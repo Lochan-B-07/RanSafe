@@ -148,6 +148,79 @@ def run_gemini_inference(system_prompt, telemetry_payload):
         print(f"[ERROR] Live Gemini API call failed: {e}", file=sys.stderr)
         return None
 
+def process_payload(payload, telemetry_schema, execution_schema, system_prompt, json_only):
+    """
+    Validates telemetry payload, runs Gemini inference, maps decisions,
+    performs logic assertions, and returns the verified action payload.
+    """
+    # 1. Validate incoming telemetry payload schema
+    try:
+        jsonschema.validate(instance=payload, schema=telemetry_schema)
+        if not json_only:
+            print("✓ Telemetry input matches telemetry_schema.json schema.")
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"✗ Telemetry input schema validation failed: {e}", file=sys.stderr)
+        return None
+
+    metrics = payload["metrics"]
+    if not json_only:
+        print(f"  Node ID: {payload['node_id']}")
+        print(f"  Metrics: CPU={metrics['cpu_utilization_percentage']}%, Writes={metrics['filesystem_write_ops_per_sec']}/s, Entropy={metrics['entropy_coefficient']}")
+
+    # Check for live API access
+    api_key = os.environ.get("GEMINI_API_KEY")
+    use_live_api = bool(api_key)
+
+    # 2. Execute inference (live or local fallback)
+    if use_live_api:
+        decision = run_gemini_inference(system_prompt, payload)
+        if decision is None:
+            if not json_only:
+                print("  Live API inference failed, falling back to local engine for this run...", file=sys.stderr)
+            decision = run_local_rule_engine(payload)
+    else:
+        decision = run_local_rule_engine(payload)
+
+    # Inject metrics and ensure node ID is present
+    decision["metrics"] = metrics
+    if "target_node_id" not in decision or not decision["target_node_id"]:
+        decision["target_node_id"] = payload.get("node_id", "unknown-node")
+
+    if not json_only:
+        print(f"  Received Decision Payload: {json.dumps(decision, indent=2)}")
+
+    # 3. Validate decision payload against execution schema
+    try:
+        jsonschema.validate(instance=decision, schema=execution_schema)
+        if not json_only:
+            print("✓ Decision output matches execution_interface.json schema.")
+        
+        # 4. State assertions based on inputs vs actions
+        cpu = metrics["cpu_utilization_percentage"]
+        write_ops = metrics["filesystem_write_ops_per_sec"]
+        entropy = metrics["entropy_coefficient"]
+        action = decision["action"]
+
+        # Perform state assertions
+        if cpu > 85.0 and write_ops > 200 and entropy > 0.80:
+            assert action == "AIRGAP_NODE", f"Expected action AIRGAP_NODE, got {action}"
+        elif cpu > 75.0 and write_ops <= 200 and entropy <= 0.80:
+            assert action == "REALLOCATE_RESOURCES", f"Expected action REALLOCATE_RESOURCES, got {action}"
+        
+        assert "authorization_token" in decision and decision["authorization_token"], "Missing authorization token"
+        assert "reasoning_summary" in decision and decision["reasoning_summary"], "Missing reasoning summary"
+        
+        if not json_only:
+            print("✓ Decision logic assertions passed successfully.")
+        
+        return decision
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"✗ Decision output schema validation failed: {e}", file=sys.stderr)
+        return None
+    except AssertionError as e:
+        print(f"✗ State assertion failed: {e}", file=sys.stderr)
+        return None
+
 def main():
     parser = argparse.ArgumentParser(description="RanSafe Dry-run Telemetry Evaluator & Payload Validator")
     parser.add_argument("--prompt", type=str, required=True,
@@ -175,14 +248,35 @@ def main():
     with open(args.prompt, "r") as f:
         system_prompt = f.read()
 
-    # Load telemetry input
+    success_count = 0
+    failure_count = 0
+
     if args.input == "-":
-        try:
-            telemetry_data = json.loads(sys.stdin.read())
-        except Exception as e:
-            print(f"[ERROR] Failed to read/parse telemetry JSON from stdin: {e}", file=sys.stderr)
-            exit(1)
+        # Read from stdin line-by-line for continuous pipe support
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+                if isinstance(payload, list):
+                    payloads = payload
+                else:
+                    payloads = [payload]
+                
+                for p in payloads:
+                    decision = process_payload(p, telemetry_schema, execution_schema, system_prompt, json_only)
+                    if decision:
+                        success_count += 1
+                        print(json.dumps(decision))
+                        sys.stdout.flush()
+                    else:
+                        failure_count += 1
+            except Exception as e:
+                print(f"[ERROR] Failed to parse/process stdin line: {e}", file=sys.stderr)
+                failure_count += 1
     else:
+        # File input mode
         if not os.path.exists(args.input):
             print(f"[ERROR] Telemetry input file not found: {args.input}", file=sys.stderr)
             exit(1)
@@ -191,112 +285,32 @@ def main():
         except Exception as e:
             print(f"[ERROR] Failed to read/parse telemetry JSON file: {e}", file=sys.stderr)
             exit(1)
-    
-    # Standardize input to list
-    if not isinstance(telemetry_data, list):
-        payloads = [telemetry_data]
-    else:
-        payloads = telemetry_data
 
-    if not json_only:
-        print(f"Loaded {len(payloads)} telemetry payload(s) for validation.")
-    
-    # Check for live API access
-    api_key = os.environ.get("GEMINI_API_KEY")
-    use_live_api = bool(api_key)
-    
-    if not json_only:
-        if use_live_api:
-            print("[INFO] GEMINI_API_KEY detected. Running live Gemini 3 inference.")
+        if isinstance(telemetry_data, list):
+            payloads = telemetry_data
         else:
-            print("[WARNING] GEMINI_API_KEY not set. Running offline rule-based simulation engine.")
+            payloads = [telemetry_data]
 
-    success_count = 0
-    failure_count = 0
-    decisions = []
+        decisions = []
+        for p in payloads:
+            decision = process_payload(p, telemetry_schema, execution_schema, system_prompt, json_only)
+            if decision:
+                decisions.append(decision)
+                success_count += 1
+            else:
+                failure_count += 1
 
-    for idx, payload in enumerate(payloads):
-        if not json_only:
-            print(f"\n--- Evaluating Payload {idx+1}/{len(payloads)} ---")
-        
-        # 1. Validate incoming telemetry payload schema
-        try:
-            jsonschema.validate(instance=payload, schema=telemetry_schema)
-            if not json_only:
-                print("✓ Telemetry input matches telemetry_schema.json schema.")
-        except jsonschema.exceptions.ValidationError as e:
-            print(f"✗ Telemetry input schema validation failed: {e}", file=sys.stderr)
-            failure_count += 1
-            continue
-
-        metrics = payload["metrics"]
-        if not json_only:
-            print(f"  Node ID: {payload['node_id']}")
-            print(f"  Metrics: CPU={metrics['cpu_utilization_percentage']}%, Writes={metrics['filesystem_write_ops_per_sec']}/s, Entropy={metrics['entropy_coefficient']}")
-
-        # 2. Execute inference (live or local fallback)
-        if use_live_api:
-            decision = run_gemini_inference(system_prompt, payload)
-            if decision is None:
-                if not json_only:
-                    print("  Live API inference failed, falling back to local engine for this run...", file=sys.stderr)
-                decision = run_local_rule_engine(payload)
+        if json_only:
+            if len(decisions) == 1:
+                print(json.dumps(decisions[0]))
+            else:
+                print(json.dumps(decisions))
+            sys.stdout.flush()
         else:
-            decision = run_local_rule_engine(payload)
+            print("\n==================================")
+            print(f"Evaluation Complete: {success_count} Passed, {failure_count} Failed.")
+            print("==================================")
 
-        # Inject metrics and ensure node ID is present
-        decision["metrics"] = metrics
-        if "target_node_id" not in decision or not decision["target_node_id"]:
-            decision["target_node_id"] = payload.get("node_id", "unknown-node")
-
-        if not json_only:
-            print(f"  Received Decision Payload: {json.dumps(decision, indent=2)}")
-
-        # 3. Validate decision payload against execution schema
-        try:
-            jsonschema.validate(instance=decision, schema=execution_schema)
-            if not json_only:
-                print("✓ Decision output matches execution_interface.json schema.")
-            
-            # 4. State assertions based on inputs vs actions
-            cpu = metrics["cpu_utilization_percentage"]
-            write_ops = metrics["filesystem_write_ops_per_sec"]
-            entropy = metrics["entropy_coefficient"]
-            action = decision["action"]
-
-            # Perform state assertions
-            if cpu > 85.0 and write_ops > 200 and entropy > 0.80:
-                assert action == "AIRGAP_NODE", f"Expected action AIRGAP_NODE, got {action}"
-            elif cpu > 75.0 and write_ops <= 200 and entropy <= 0.80:
-                assert action == "REALLOCATE_RESOURCES", f"Expected action REALLOCATE_RESOURCES, got {action}"
-            
-            assert "authorization_token" in decision and decision["authorization_token"], "Missing authorization token"
-            assert "reasoning_summary" in decision and decision["reasoning_summary"], "Missing reasoning summary"
-            
-            if not json_only:
-                print("✓ Decision logic assertions passed successfully.")
-            
-            decisions.append(decision)
-            success_count += 1
-        except jsonschema.exceptions.ValidationError as e:
-            print(f"✗ Decision output schema validation failed: {e}", file=sys.stderr)
-            failure_count += 1
-        except AssertionError as e:
-            print(f"✗ State assertion failed: {e}", file=sys.stderr)
-            failure_count += 1
-
-    if json_only:
-        # If single decision, output it directly as single line JSON
-        # If multiple, output as a JSON array
-        if len(decisions) == 1:
-            print(json.dumps(decisions[0]))
-        else:
-            print(json.dumps(decisions))
-    else:
-        print("\n==================================")
-        print(f"Evaluation Complete: {success_count} Passed, {failure_count} Failed.")
-        print("==================================")
-    
     if failure_count > 0:
         exit(1)
     else:

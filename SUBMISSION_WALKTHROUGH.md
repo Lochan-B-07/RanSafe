@@ -131,3 +131,30 @@ python3 -m unittest agent/test_agent.py
 node agent/test_mcp_client.js
 ```
 *(All 5 validation tests will verify strict telemetry schemas).*
+
+---
+
+## 🎥 Pitch Video Recording Guide
+
+To record the 3-minute hackathon walkthrough, arrange your screen layout and follow the timeline script below.
+
+### 🖥️ Screen Layout Setup
+1. **Left Side (The CLI)**: Snap your terminal to the left half of the screen. Pre-type the command: `./run_orchestrator.sh --mode ransomware --offline`
+2. **Right Side (The GUI)**: Snap your browser to the right half, loaded to `http://localhost:8080` (will start loading once you run the command).
+
+### 🎙️ Voiceover Script & Visual Timeline
+
+* **[0:00 - 0:40] Introduction & Necessity**
+  > "Ransomware is no longer just a database encryption issue; it is an infrastructure-wide disaster. Once inside a cloud cluster, malware spreads laterally to copy and lock down your microservices in less than three minutes. Traditional security systems rely on passive monitoring and human SRE response times. But by the time a human engineer receives the alert, opens the dashboard, and clicks 'isolate', the business data is already gone. This critical gap is why we built RanSafe: an autonomous, state-mutating SRE circuit breaker that detects, validates, and completely isolates ransomware threats in under five seconds."
+
+* **[0:40 - 1:15] Architecture & Ingestion**
+  > "To demonstrate this, we have set up our side-by-side monitoring cockpit. On the left is our lightweight SRE Terminal UI showing active system logging. On the right is our premium, glassmorphic SRE Web Dashboard. Under normal operations, our microservices stream trace data to Dynatrace using OpenTelemetry. Our custom Model Context Protocol client fetches this telemetry via the Dynatrace API, constantly checking CPU utilization, disk write frequency, and filesystem write entropy."
+
+* **[1:15 - 2:05] The Attack Trigger**
+  > "Now, we trigger a simulated ransomware attack. In real-time, the metric dials spike: CPU utilization crosses 90%, write frequency exceeds 400 operations per second, and filesystem entropy climbs to 0.94, signaling active database encryption. The Gemini-powered AI validator instantly flags this signature, executes strict schema validation on the threat profile, and retrieves a secure authentication token from Google Cloud Secret Manager to authorize a lock-down."
+
+* **[2:05 - 2:40] Active Containment**
+  > "Once authenticated, RanSafe moves from monitoring to active containment. On our dashboard checklist, you can see the orchestrator dynamically mutating the live cloud state: it injects Cloud Armor deny rules to block ingress, creates VPC firewall blocks to stop lateral spread, strips IAM service account permissions to protect credentials, and evicts the compromised pod from the cluster namespace."
+
+* **[2:40 - 3:00] Recovery & Outro**
+  > "With the threat isolated, RanSafe spins up a clean, uninfected replica to restore services automatically. RanSafe eliminates the critical human delay in security operations, guaranteeing business continuity and protecting enterprise databases from encryption. Thank you."

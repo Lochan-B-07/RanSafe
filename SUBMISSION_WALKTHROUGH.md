@@ -56,6 +56,8 @@ To run the orchestrator and validator locally, ensure your environment variables
    DYNATRACE_API_TOKEN=dt0c01.MFZSS...
    GEMINI_API_KEY=AIzaSy...
    ```
+   > [!NOTE]
+   > **Dynatrace Tenant Expiration**: If the 15-day Dynatrace trial environment has expired, you can run the orchestrator with the `--offline` flag (e.g., `./run_orchestrator.sh --mode ransomware --offline`). This executes the complete schema-validation, Gemini 3 threat reasoning, and containment simulation locally without needing an active SaaS connection.
 3. Install required Python packages for the validator and SRE dashboard:
    ```bash
    pip install jsonschema google-genai opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp rich

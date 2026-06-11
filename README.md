@@ -11,6 +11,12 @@
 
 ---
 
+## 📖 Submission Walkthrough & Demo Guide
+
+To demonstrate or test the RanSafe orchestrator locally and in Google Cloud, please follow the step-by-step setup and live demo guide in **[SUBMISSION_WALKTHROUGH.md](SUBMISSION_WALKTHROUGH.md)**.
+
+---
+
 ## 🚨 The Problem & The Solution
 
 * **The Problem:** When ransomware breaches an enterprise cloud cluster, it spreads laterally across microservices in a matter of seconds. Human IT teams and traditional monitoring systems are fundamentally too slow to isolate the infected nodes before the data is permanently encrypted.

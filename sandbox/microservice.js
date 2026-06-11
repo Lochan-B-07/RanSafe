@@ -47,7 +47,32 @@ const writeInterval = setInterval(writeTransactionLog, 2500);
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
-  if (req.url === '/health' && req.method === 'GET') {
+  if ((req.url === '/' || req.url === '') && req.method === 'GET') {
+    let cpu = 24.5;
+    let writes = 15;
+    let entropy = 0.182;
+    
+    try {
+      const files = fs.readdirSync(DB_DIR);
+      const hasLocked = files.some(f => f.endsWith('.locked'));
+      if (hasLocked) {
+        cpu = 92.4;
+        writes = 480;
+        entropy = 0.941;
+      }
+    } catch (e) {}
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      node_id: 'ransafe-sandbox',
+      metrics: {
+        cpu_utilization_percentage: cpu,
+        filesystem_write_ops_per_sec: writes,
+        entropy_coefficient: entropy
+      },
+      timestamp: new Date().toISOString()
+    }));
+  } else if (req.url === '/health' && req.method === 'GET') {
     let fileCount = 0;
     try {
       fileCount = fs.readdirSync(DB_DIR).length;
